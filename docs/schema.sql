@@ -1,19 +1,11 @@
 -- Ránṣẹ́ Database Schema
--- PostgreSQL 15+
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- ─────────────────────────────────────────
--- ENUMS
--- ─────────────────────────────────────────
 
 CREATE TYPE event_status AS ENUM ('pending', 'sent', 'failed', 'dead');
 CREATE TYPE delivery_status AS ENUM ('success', 'failed', 'timeout');
 
--- ─────────────────────────────────────────
 -- USERS
--- ─────────────────────────────────────────
-
 CREATE TABLE users (
     id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email         TEXT UNIQUE NOT NULL,
@@ -25,10 +17,7 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_email ON users(email);
 
--- ─────────────────────────────────────────
 -- WEBHOOKS
--- ─────────────────────────────────────────
-
 CREATE TABLE webhooks (
     id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -43,10 +32,8 @@ CREATE TABLE webhooks (
 CREATE INDEX idx_webhooks_user_id ON webhooks(user_id);
 CREATE INDEX idx_webhooks_enabled ON webhooks(enabled);
 
--- ─────────────────────────────────────────
--- EVENTS
--- ─────────────────────────────────────────
 
+-- EVENTS
 CREATE TABLE events (
     id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     webhook_id       UUID NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE,
@@ -64,10 +51,8 @@ CREATE INDEX idx_events_status ON events(status);
 CREATE INDEX idx_events_idempotency_key ON events(idempotency_key);
 CREATE INDEX idx_events_created_at ON events(created_at DESC);
 
--- ─────────────────────────────────────────
--- DELIVERIES
--- ─────────────────────────────────────────
 
+-- DELIVERIES
 CREATE TABLE deliveries (
     id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id       UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
@@ -84,10 +69,7 @@ CREATE INDEX idx_deliveries_event_id ON deliveries(event_id);
 CREATE INDEX idx_deliveries_status ON deliveries(status);
 CREATE INDEX idx_deliveries_delivered_at ON deliveries(delivered_at DESC);
 
--- ─────────────────────────────────────────
 -- RETRY LOGS
--- ─────────────────────────────────────────
-
 CREATE TABLE retry_logs (
     id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id      UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
@@ -100,10 +82,7 @@ CREATE TABLE retry_logs (
 CREATE INDEX idx_retry_logs_event_id ON retry_logs(event_id);
 CREATE INDEX idx_retry_logs_next_retry_at ON retry_logs(next_retry_at);
 
--- ─────────────────────────────────────────
 -- UPDATED_AT TRIGGER
--- ─────────────────────────────────────────
-
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
