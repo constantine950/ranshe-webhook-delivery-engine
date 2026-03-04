@@ -1,17 +1,17 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api } from '../lib/api'
-import { useAuth } from '../hooks/useAuth'
+import { api } from '@/lib/api'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
+  const { login }               = useAuth()
+  const navigate                = useNavigate()
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -20,7 +20,7 @@ export default function RegisterPage() {
       await login(email, password)
       navigate('/metrics')
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -43,18 +43,36 @@ export default function RegisterPage() {
             )}
             <div>
               <label className="block text-sm text-gray-400 mb-1">Email</label>
-              <input className="input" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
+              <input
+                className="input"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+              />
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Password</label>
-              <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="min. 8 characters" minLength={8} />
+              <input
+                className="input"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="min. 8 characters"
+                minLength={8}
+              />
             </div>
             <button type="submit" className="btn-primary w-full" disabled={loading}>
               {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
           <p className="text-sm text-gray-500 text-center mt-4">
-            Already have an account? <Link to="/login" className="text-brand-400 hover:underline">Sign in</Link>
+            Already have an account?{' '}
+            <Link to="/login" className="text-brand-400 hover:underline">
+              Sign in
+            </Link>
           </p>
         </div>
       </div>

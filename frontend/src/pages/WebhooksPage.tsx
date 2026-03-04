@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react'
-import { api } from '../lib/api'
+import { useState, useEffect, type FormEvent } from 'react'
+import { api } from '@/lib/api'
+import type { Webhook } from '@/types'
 import { Plus, Trash2, ToggleLeft, ToggleRight, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react'
 
 export default function WebhooksPage() {
-  const [webhooks, setWebhooks] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [name, setName] = useState('')
-  const [url, setUrl] = useState('')
-  const [creating, setCreating] = useState(false)
-  const [error, setError] = useState('')
-  const [revealedSecrets, setRevealedSecrets] = useState({})
-  const [copied, setCopied] = useState(null)
+  const [webhooks, setWebhooks]           = useState<Webhook[]>([])
+  const [loading, setLoading]             = useState(true)
+  const [showForm, setShowForm]           = useState(false)
+  const [name, setName]                   = useState('')
+  const [url, setUrl]                     = useState('')
+  const [creating, setCreating]           = useState(false)
+  const [error, setError]                 = useState('')
+  const [revealedSecrets, setRevealedSecrets] = useState<Record<string, boolean>>({})
+  const [copied, setCopied]               = useState<string | null>(null)
 
   const load = async () => {
     try {
@@ -22,9 +23,9 @@ export default function WebhooksPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { void load() }, [])
 
-  const handleCreate = async (e) => {
+  const handleCreate = async (e: FormEvent) => {
     e.preventDefault()
     setCreating(true)
     setError('')
@@ -35,33 +36,37 @@ export default function WebhooksPage() {
       setShowForm(false)
       await load()
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : 'Failed to create webhook')
     } finally {
       setCreating(false)
     }
   }
 
-  const handleToggle = async (wh) => {
+  const handleToggle = async (wh: Webhook) => {
     await api.updateWebhook(wh.id, { enabled: !wh.enabled })
     await load()
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Delete this webhook and all its events?')) return
     await api.deleteWebhook(id)
     await load()
   }
 
-  const handleRotate = async (id) => {
+  const handleRotate = async (id: string) => {
     if (!confirm('Rotate the secret? Old signatures will be invalid.')) return
     await api.rotateSecret(id)
     await load()
   }
 
-  const copySecret = (id, secret) => {
-    navigator.clipboard.writeText(secret)
+  const copySecret = (id: string, secret: string) => {
+    void navigator.clipboard.writeText(secret)
     setCopied(id)
     setTimeout(() => setCopied(null), 2000)
+  }
+
+  const toggleReveal = (id: string) => {
+    setRevealedSecrets(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
   return (
@@ -81,20 +86,37 @@ export default function WebhooksPage() {
         <div className="card mb-6">
           <h3 className="font-semibold mb-4">Register Webhook</h3>
           <form onSubmit={handleCreate} className="space-y-4">
-            {error && <div className="text-red-400 text-sm">{error}</div>}
+            {error && <p className="text-red-400 text-sm">{error}</p>}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Name</label>
-                <input className="input" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Payment Service" />
+                <input
+                  className="input"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  required
+                  placeholder="e.g. Payment Service"
+                />
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-1">URL</label>
-                <input className="input" value={url} onChange={e => setUrl(e.target.value)} required placeholder="https://your-service.com/webhook" type="url" />
+                <input
+                  className="input"
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  required
+                  placeholder="https://your-service.com/webhook"
+                  type="url"
+                />
               </div>
             </div>
             <div className="flex gap-3">
-              <button type="submit" className="btn-primary" disabled={creating}>{creating ? 'Creating...' : 'Create'}</button>
-              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="btn-primary" disabled={creating}>
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>
+                Cancel
+              </button>
             </div>
           </form>
         </div>
@@ -118,7 +140,7 @@ export default function WebhooksPage() {
                       {wh.enabled ? 'Active' : 'Disabled'}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-400 truncate mb-3">{wh.url}</div>
+                  <p className="text-sm text-gray-400 truncate mb-3">{wh.url}</p>
 
                   {wh.secret && (
                     <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
@@ -126,19 +148,22 @@ export default function WebhooksPage() {
                       <code className="text-xs text-brand-400 flex-1 font-mono truncate">
                         {revealedSecrets[wh.id] ? wh.secret : '••••••••••••••••••••••••••••••'}
                       </code>
-                      <button onClick={() => setRevealedSecrets(p => ({...p, [wh.id]: !p[wh.id]}))} className="text-gray-500 hover:text-gray-300">
+                      <button onClick={() => toggleReveal(wh.id)} className="text-gray-500 hover:text-gray-300">
                         {revealedSecrets[wh.id] ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
-                      <button onClick={() => copySecret(wh.id, wh.secret)} className="text-gray-500 hover:text-gray-300">
+                      <button onClick={() => copySecret(wh.id, wh.secret!)} className="text-gray-500 hover:text-gray-300">
                         {copied === wh.id ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
                       </button>
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   <button onClick={() => handleToggle(wh)} className="text-gray-400 hover:text-gray-200 p-1" title={wh.enabled ? 'Disable' : 'Enable'}>
-                    {wh.enabled ? <ToggleRight size={20} className="text-green-400" /> : <ToggleLeft size={20} />}
+                    {wh.enabled
+                      ? <ToggleRight size={20} className="text-green-400" />
+                      : <ToggleLeft size={20} />
+                    }
                   </button>
                   <button onClick={() => handleRotate(wh.id)} className="text-gray-400 hover:text-yellow-400 p-1" title="Rotate secret">
                     <RefreshCw size={16} />

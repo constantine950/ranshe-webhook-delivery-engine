@@ -1,21 +1,30 @@
 import { useState, useEffect } from 'react'
-import { api } from '../lib/api'
+import { api } from '@/lib/api'
+import type { Event, Delivery, EventStatus } from '@/types'
 import { RefreshCw, ChevronDown, ChevronUp, Send } from 'lucide-react'
 
-const STATUS_BADGE = {
+const STATUS_BADGE: Record<EventStatus, string> = {
   pending: 'badge-pending',
-  sent: 'badge-sent',
-  failed: 'badge-failed',
-  dead: 'badge-dead',
+  sent:    'badge-sent',
+  failed:  'badge-failed',
+  dead:    'badge-dead',
 }
 
+const FILTERS: Array<{ label: string; value: string }> = [
+  { label: 'All',     value: '' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Sent',    value: 'sent' },
+  { label: 'Failed',  value: 'failed' },
+  { label: 'Dead',    value: 'dead' },
+]
+
 export default function EventsPage() {
-  const [events, setEvents] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('')
-  const [expanded, setExpanded] = useState(null)
-  const [deliveries, setDeliveries] = useState({})
-  const [retrying, setRetrying] = useState(null)
+  const [events, setEvents]         = useState<Event[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [filter, setFilter]         = useState('')
+  const [expanded, setExpanded]     = useState<string | null>(null)
+  const [deliveries, setDeliveries] = useState<Record<string, Delivery[]>>({})
+  const [retrying, setRetrying]     = useState<string | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -27,27 +36,24 @@ export default function EventsPage() {
     }
   }
 
-  useEffect(() => { load() }, [filter])
+  useEffect(() => { void load() }, [filter])
 
-  const toggleExpand = async (eventId) => {
-    if (expanded === eventId) {
-      setExpanded(null)
-      return
-    }
+  const toggleExpand = async (eventId: string) => {
+    if (expanded === eventId) { setExpanded(null); return }
     setExpanded(eventId)
     if (!deliveries[eventId]) {
       const data = await api.getDeliveries(eventId)
-      setDeliveries(p => ({ ...p, [eventId]: data }))
+      setDeliveries(prev => ({ ...prev, [eventId]: data }))
     }
   }
 
-  const handleRetry = async (eventId) => {
+  const handleRetry = async (eventId: string) => {
     setRetrying(eventId)
     try {
       await api.retryEvent(eventId)
       await load()
     } catch (err) {
-      alert(err.message)
+      alert(err instanceof Error ? err.message : 'Retry failed')
     } finally {
       setRetrying(null)
     }
@@ -60,18 +66,25 @@ export default function EventsPage() {
           <h2 className="text-2xl font-bold">Events</h2>
           <p className="text-gray-500 text-sm mt-1">Track all webhook delivery attempts</p>
         </div>
-        <button onClick={load} className="btn-secondary flex items-center gap-2">
+        <button onClick={() => void load()} className="btn-secondary flex items-center gap-2">
           <RefreshCw size={14} />
           Refresh
         </button>
       </div>
 
-      {/* Filter */}
+      {/* Filters */}
       <div className="flex gap-2 mb-6">
-        {['', 'pending', 'sent', 'failed', 'dead'].map(s => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${filter === s ? 'bg-brand-700 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
-            {s || 'All'}
+        {FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setFilter(f.value)}
+            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              filter === f.value
+                ? 'bg-brand-700 text-white'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            {f.label}
           </button>
         ))}
       </div>
@@ -84,29 +97,38 @@ export default function EventsPage() {
         <div className="space-y-2">
           {events.map(ev => (
             <div key={ev.id} className="card p-0 overflow-hidden">
-              <div className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
-                onClick={() => toggleExpand(ev.id)}>
+              <div
+                className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
+                onClick={() => void toggleExpand(ev.id)}
+              >
                 <span className={STATUS_BADGE[ev.status]}>{ev.status}</span>
                 <span className="text-sm font-medium">{ev.event_type}</span>
                 <span className="text-xs text-gray-500 font-mono truncate flex-1">{ev.id}</span>
                 <span className="text-xs text-gray-500">{new Date(ev.created_at).toLocaleString()}</span>
-                <span className="text-xs text-gray-500">{ev.attempt_count} attempt{ev.attempt_count !== 1 ? 's' : ''}</span>
+                <span className="text-xs text-gray-500">
+                  {ev.attempt_count} attempt{ev.attempt_count !== 1 ? 's' : ''}
+                </span>
 
                 {(ev.status === 'failed' || ev.status === 'dead') && (
-                  <button onClick={e => { e.stopPropagation(); handleRetry(ev.id) }}
+                  <button
+                    onClick={e => { e.stopPropagation(); void handleRetry(ev.id) }}
                     disabled={retrying === ev.id}
-                    className="btn-secondary text-xs py-1 px-2 flex items-center gap-1">
+                    className="btn-secondary text-xs py-1 px-2 flex items-center gap-1"
+                  >
                     <Send size={12} />
                     {retrying === ev.id ? 'Retrying...' : 'Retry'}
                   </button>
                 )}
 
-                {expanded === ev.id ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+                {expanded === ev.id
+                  ? <ChevronUp size={16} className="text-gray-500 shrink-0" />
+                  : <ChevronDown size={16} className="text-gray-500 shrink-0" />
+                }
               </div>
 
               {expanded === ev.id && (
                 <div className="border-t border-gray-800 p-4 bg-gray-900/50">
-                  <div className="grid grid-cols-2 gap-6 mb-4">
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Payload</p>
                       <pre className="text-xs text-gray-300 bg-gray-800 p-3 rounded-lg overflow-auto max-h-40">
@@ -115,11 +137,11 @@ export default function EventsPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-2">Delivery Attempts</p>
-                      {deliveries[ev.id]?.length === 0 ? (
+                      {!deliveries[ev.id] || deliveries[ev.id].length === 0 ? (
                         <p className="text-xs text-gray-500">No attempts yet.</p>
                       ) : (
                         <div className="space-y-2">
-                          {(deliveries[ev.id] || []).map(d => (
+                          {deliveries[ev.id].map(d => (
                             <div key={d.id} className="bg-gray-800 rounded-lg p-2 text-xs">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className={`font-medium ${d.status === 'success' ? 'text-green-400' : 'text-red-400'}`}>

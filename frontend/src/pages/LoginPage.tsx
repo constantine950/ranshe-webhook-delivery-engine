@@ -1,16 +1,16 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
+  const { login }               = useAuth()
+  const navigate                = useNavigate()
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -18,7 +18,7 @@ export default function LoginPage() {
       await login(email, password)
       navigate('/metrics')
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : 'Login failed')
     } finally {
       setLoading(false)
     }
@@ -41,18 +41,35 @@ export default function LoginPage() {
             )}
             <div>
               <label className="block text-sm text-gray-400 mb-1">Email</label>
-              <input className="input" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" />
+              <input
+                className="input"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+              />
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Password</label>
-              <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
+              <input
+                className="input"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+              />
             </div>
             <button type="submit" className="btn-primary w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
           <p className="text-sm text-gray-500 text-center mt-4">
-            No account? <Link to="/register" className="text-brand-400 hover:underline">Register</Link>
+            No account?{' '}
+            <Link to="/register" className="text-brand-400 hover:underline">
+              Register
+            </Link>
           </p>
         </div>
       </div>

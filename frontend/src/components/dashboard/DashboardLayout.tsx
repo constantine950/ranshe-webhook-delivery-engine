@@ -1,12 +1,12 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { Webhook, Zap, BarChart3, LogOut } from 'lucide-react'
 
 const navItems = [
-  { to: '/metrics', label: 'Metrics', icon: BarChart3 },
-  { to: '/webhooks', label: 'Webhooks', icon: Webhook },
-  { to: '/events', label: 'Events', icon: Zap },
-]
+  { to: '/metrics',  label: 'Metrics',  icon: BarChart3 },
+  { to: '/webhooks', label: 'Webhooks', icon: Webhook   },
+  { to: '/events',   label: 'Events',   icon: Zap       },
+] as const
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth()
@@ -20,7 +20,7 @@ export default function DashboardLayout() {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-60 bg-gray-900 border-r border-gray-800 flex flex-col">
+      <aside className="w-60 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0">
         <div className="p-6 border-b border-gray-800">
           <h1 className="text-xl font-bold text-brand-400">Ránṣẹ́</h1>
           <p className="text-xs text-gray-500 mt-1">Webhook Engine</p>
@@ -46,8 +46,11 @@ export default function DashboardLayout() {
         </nav>
 
         <div className="p-4 border-t border-gray-800">
-          <div className="text-xs text-gray-500 mb-3 truncate">{user?.email}</div>
-          <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition-colors">
+          <p className="text-xs text-gray-500 mb-3 truncate">{user?.email}</p>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition-colors"
+          >
             <LogOut size={14} />
             Sign out
           </button>
