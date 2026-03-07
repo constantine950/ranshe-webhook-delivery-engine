@@ -37,7 +37,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
 app.include_router(events.router, prefix="/events", tags=["Events"])
-app.include_router(deliveries.router, prefix="/deliveries", tags=["Deliveries"])
+app.include_router(deliveries.router, prefix="/deliveries",
+                   tags=["Deliveries"])
 app.include_router(metrics.router, prefix="/metrics", tags=["Metrics"])
 
 

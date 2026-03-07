@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, HttpUrl
+from pydantic import BaseModel, EmailStr
 from typing import Optional, Any, Dict
 from datetime import datetime
 from uuid import UUID
@@ -6,8 +6,7 @@ from uuid import UUID
 from app.models.event import EventStatus, DeliveryStatus
 
 
-# ─── Auth ───────────────────────────────────────────────────────
-
+# auth
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
@@ -32,11 +31,10 @@ class UserOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ─── Webhooks ───────────────────────────────────────────────────
-
+# Webhooks
 class WebhookCreate(BaseModel):
     name: str
-    url: str  # HttpUrl causes issues with some test URLs
+    url: str
 
 
 class WebhookUpdate(BaseModel):
@@ -59,13 +57,12 @@ class WebhookWithSecret(WebhookOut):
     secret: str
 
 
-# ─── Events ─────────────────────────────────────────────────────
-
+# Events
 class EventCreate(BaseModel):
     webhook_id: UUID
     payload: Dict[str, Any]
     event_type: str = "generic"
-    idempotency_key: Optional[str] = None  # auto-generated if not provided
+    idempotency_key: Optional[str] = None
 
 
 class EventOut(BaseModel):
@@ -80,8 +77,7 @@ class EventOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ─── Deliveries ─────────────────────────────────────────────────
-
+# Deliveries
 class DeliveryOut(BaseModel):
     id: UUID
     event_id: UUID
@@ -96,8 +92,7 @@ class DeliveryOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ─── Metrics ────────────────────────────────────────────────────
-
+# Metrics
 class MetricsOut(BaseModel):
     total_events: int
     total_sent: int
