@@ -30,12 +30,17 @@ class Event(Base):
         UUID(as_uuid=True), ForeignKey("webhooks.id", ondelete="CASCADE"), nullable=False
     )
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    event_type: Mapped[str] = mapped_column(String, nullable=False, default="generic")
-    idempotency_key: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    event_type: Mapped[str] = mapped_column(
+        String, nullable=False, default="generic")
+    idempotency_key: Mapped[str] = mapped_column(
+        String, unique=True, nullable=False)
     status: Mapped[EventStatus] = mapped_column(
-        SAEnum(EventStatus), nullable=False, default=EventStatus.pending
+        SAEnum(EventStatus, name="event_status", create_type=False),
+        nullable=False,
+        default=EventStatus.pending
     )
-    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    attempt_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -45,8 +50,10 @@ class Event(Base):
 
     # Relationships
     webhook = relationship("Webhook", back_populates="events")
-    deliveries = relationship("Delivery", back_populates="event", cascade="all, delete-orphan")
-    retry_logs = relationship("RetryLog", back_populates="event", cascade="all, delete-orphan")
+    deliveries = relationship(
+        "Delivery", back_populates="event", cascade="all, delete-orphan")
+    retry_logs = relationship(
+        "RetryLog", back_populates="event", cascade="all, delete-orphan")
 
 
 class Delivery(Base):
@@ -60,7 +67,8 @@ class Delivery(Base):
     )
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[DeliveryStatus] = mapped_column(
-        SAEnum(DeliveryStatus), nullable=False
+        SAEnum(DeliveryStatus, name="delivery_status", create_type=False),
+        nullable=False
     )
     status_code: Mapped[int] = mapped_column(Integer, nullable=True)
     response_body: Mapped[str] = mapped_column(String, nullable=True)
@@ -84,7 +92,8 @@ class RetryLog(Base):
         UUID(as_uuid=True), ForeignKey("events.id", ondelete="CASCADE"), nullable=False
     )
     attempt: Mapped[int] = mapped_column(Integer, nullable=False)
-    next_retry_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
+    next_retry_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), nullable=False)
     reason: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
