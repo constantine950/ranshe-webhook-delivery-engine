@@ -13,7 +13,6 @@ async def enqueue_event(event_id: str, delay_seconds: int = 0):
     r = await get_redis()
     try:
         if delay_seconds > 0:
-            # Use a sorted set for delayed jobs (score = delivery timestamp)
             import time
             score = time.time() + delay_seconds
             await r.zadd("ranshe:delayed_queue", {event_id: score})
