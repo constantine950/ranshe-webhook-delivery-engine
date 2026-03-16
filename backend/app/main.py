@@ -3,16 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.db.session import engine
 from app.api.routes import auth, webhooks, events, deliveries, metrics
+
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
     print(f"🚀 {settings.APP_NAME} starting up...")
     yield
-    # Shutdown
     await engine.dispose()
     print("👋 Shutting down...")
 
@@ -24,16 +26,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Routers
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
 app.include_router(events.router, prefix="/events", tags=["Events"])

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
@@ -10,18 +10,20 @@ from app.models.event import Event, EventStatus
 from app.schemas.schemas import EventCreate, EventOut
 from app.core.dependencies import get_current_user
 from app.core.security import compute_idempotency_key
+from app.core.limiter import limiter
 from app.services.queue import enqueue_event
 
 router = APIRouter()
 
 
 @router.post("", response_model=EventOut, status_code=201)
+@limiter.limit("60/minute")
 async def create_event(
+    request: Request,
     data: EventCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Verify webhook belongs to user
     result = await db.execute(
         select(Webhook).where(
             Webhook.id == data.webhook_id,
@@ -34,12 +36,10 @@ async def create_event(
         raise HTTPException(
             status_code=404, detail="Webhook not found or disabled")
 
-    # Compute idempotency key
     idem_key = data.idempotency_key or compute_idempotency_key(
         str(data.webhook_id), data.payload
     )
 
-    # Check for duplicate
     existing = await db.execute(
         select(Event).where(Event.idempotency_key == idem_key)
     )
@@ -47,7 +47,6 @@ async def create_event(
         raise HTTPException(
             status_code=409, detail="Duplicate event (idempotency key exists)")
 
-    # Create event
     event = Event(
         webhook_id=data.webhook_id,
         payload=data.payload,
@@ -59,7 +58,6 @@ async def create_event(
     await db.flush()
     await db.refresh(event)
 
-    # Enqueue for delivery
     await enqueue_event(str(event.id))
 
     return event
