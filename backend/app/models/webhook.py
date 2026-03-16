@@ -18,7 +18,8 @@ class Webhook(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
     secret: Mapped[str] = mapped_column(String, nullable=False)
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=False)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -28,4 +29,5 @@ class Webhook(Base):
 
     # Relationships
     user = relationship("User", back_populates="webhooks")
-    events = relationship("Event", back_populates="webhook", cascade="all, delete-orphan")
+    events = relationship("Event", back_populates="webhook",
+                          cascade="all, delete-orphan")

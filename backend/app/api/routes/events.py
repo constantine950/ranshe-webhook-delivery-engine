@@ -31,7 +31,8 @@ async def create_event(
     )
     webhook = result.scalar_one_or_none()
     if not webhook:
-        raise HTTPException(status_code=404, detail="Webhook not found or disabled")
+        raise HTTPException(
+            status_code=404, detail="Webhook not found or disabled")
 
     # Compute idempotency key
     idem_key = data.idempotency_key or compute_idempotency_key(
@@ -43,7 +44,8 @@ async def create_event(
         select(Event).where(Event.idempotency_key == idem_key)
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Duplicate event (idempotency key exists)")
+        raise HTTPException(
+            status_code=409, detail="Duplicate event (idempotency key exists)")
 
     # Create event
     event = Event(

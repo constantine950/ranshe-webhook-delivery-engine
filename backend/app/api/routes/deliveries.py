@@ -56,7 +56,8 @@ async def manual_retry(
         raise HTTPException(status_code=404, detail="Event not found")
 
     if event.status == EventStatus.sent:
-        raise HTTPException(status_code=400, detail="Event already delivered successfully")
+        raise HTTPException(
+            status_code=400, detail="Event already delivered successfully")
 
     # Reset to pending and re-enqueue
     event.status = EventStatus.pending

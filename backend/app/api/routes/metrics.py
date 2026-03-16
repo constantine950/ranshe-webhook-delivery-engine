@@ -32,7 +32,8 @@ async def get_metrics(
     total_pending = status_counts.get(EventStatus.pending, 0)
     total_events = total_sent + total_failed + total_dead + total_pending
 
-    success_rate = (total_sent / total_events * 100) if total_events > 0 else 0.0
+    success_rate = (total_sent / total_events *
+                    100) if total_events > 0 else 0.0
 
     # Avg latency from successful deliveries
     latency_result = await db.execute(

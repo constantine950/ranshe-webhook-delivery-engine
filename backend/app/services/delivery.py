@@ -109,10 +109,12 @@ async def _handle_failure(event: Event, attempt_number: int, reason: str, db: As
 
     if attempt_number >= settings.MAX_RETRY_ATTEMPTS:
         event.status = EventStatus.dead
-        logger.warning(f"☠️  Event {event.id} moved to dead-letter queue after {attempt_number} attempts")
+        logger.warning(
+            f"☠️  Event {event.id} moved to dead-letter queue after {attempt_number} attempts")
         return
 
-    delay = delays[attempt_number - 1] if attempt_number - 1 < len(delays) else delays[-1]
+    delay = delays[attempt_number - 1] if attempt_number - \
+        1 < len(delays) else delays[-1]
     next_retry_at = datetime.utcnow() + timedelta(seconds=delay)
 
     retry_log = RetryLog(
@@ -125,4 +127,5 @@ async def _handle_failure(event: Event, attempt_number: int, reason: str, db: As
     event.status = EventStatus.pending
 
     await enqueue_event(str(event.id), delay_seconds=delay)
-    logger.info(f"🔁 Event {event.id} retry #{attempt_number + 1} scheduled in {delay}s")
+    logger.info(
+        f"🔁 Event {event.id} retry #{attempt_number + 1} scheduled in {delay}s")
