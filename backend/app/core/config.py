@@ -23,7 +23,9 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> List[str]:
-        return [o.strip() for o in self.CORS_ORIGINS.split(",")]
+        origins = self.CORS_ORIGINS.strip(
+            "[]").replace('"', '').replace("'", "")
+        return [o.strip() for o in origins.split(",")]
 
     @property
     def retry_delays(self) -> List[int]:
