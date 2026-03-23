@@ -6,11 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from app.main import app
 from app.db.session import Base, get_db
 
-# Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+TestSessionLocal = async_sessionmaker(
+    test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def override_get_db():
@@ -50,7 +50,7 @@ async def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
-# ─── Tests ──────────────────────────────────────────────────────
+# Tests
 
 @pytest.mark.asyncio
 async def test_health(client):
@@ -101,7 +101,8 @@ async def test_duplicate_event_rejected(client, auth_headers):
     wh = await client.post("/webhooks", json={"name": "WH", "url": "https://example.com"}, headers=auth_headers)
     webhook_id = wh.json()["id"]
 
-    payload = {"webhook_id": webhook_id, "payload": {"data": "test"}, "idempotency_key": "unique-key-123"}
+    payload = {"webhook_id": webhook_id, "payload": {
+        "data": "test"}, "idempotency_key": "unique-key-123"}
 
     r1 = await client.post("/events", json=payload, headers=auth_headers)
     # First submission may succeed or fail depending on Redis availability in test

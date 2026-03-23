@@ -13,10 +13,10 @@ from slowapi.errors import RateLimitExceeded
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f"🚀 {settings.APP_NAME} starting up...")
+    print(f"{settings.APP_NAME} starting up...")
     yield
     await engine.dispose()
-    print("👋 Shutting down...")
+    print("Shutting down...")
 
 
 app = FastAPI(

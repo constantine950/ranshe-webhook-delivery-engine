@@ -45,25 +45,25 @@ Client → FastAPI → PostgreSQL
 
 ## 4. Data Model
 
-| Table | Purpose |
-|-------|---------|
-| users | Authentication |
-| webhooks | Registered endpoints + secrets |
-| events | Queued payloads + status |
+| Table      | Purpose                                     |
+| ---------- | ------------------------------------------- |
+| users      | Authentication                              |
+| webhooks   | Registered endpoints + secrets              |
+| events     | Queued payloads + status                    |
 | deliveries | Per-attempt log (status, latency, response) |
-| retry_logs | Scheduled retry timestamps + reasons |
+| retry_logs | Scheduled retry timestamps + reasons        |
 
 ---
 
 ## 5. Retry Strategy
 
-| Attempt | Delay |
-|---------|-------|
-| 1 | 1 minute |
-| 2 | 5 minutes |
-| 3 | 30 minutes |
-| 4 | 2 hours |
-| 5 | 8 hours |
+| Attempt | Delay      |
+| ------- | ---------- |
+| 1       | 1 minute   |
+| 2       | 5 minutes  |
+| 3       | 30 minutes |
+| 4       | 2 hours    |
+| 5       | 8 hours    |
 
 After attempt 5 → dead-letter queue. Manual retry available via `POST /deliveries/retry/{event_id}`.
 
@@ -82,10 +82,10 @@ GET    /metrics
 
 ---
 
-## 7. Success Criteria (Day 30)
+## 7. Success Criteria
 
 - [ ] Webhook registered via API
-- [ ] Event delivered to real HTTP endpoint  
+- [ ] Event delivered to real HTTP endpoint
 - [ ] Failed delivery automatically retried up to 5x
 - [ ] Delivery logs visible in dashboard
 - [ ] `docker compose up` starts everything

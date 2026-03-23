@@ -65,7 +65,7 @@ async def deliver_event(event_id: str, db: AsyncSession):
             )
             latency_ms = int((time.monotonic() - start) * 1000)
             status_code = response.status_code
-            response_body = response.text[:1000]  # truncate
+            response_body = response.text[:1000]
 
             if 200 <= status_code < 300:
                 delivery_status = DeliveryStatus.success
@@ -97,7 +97,7 @@ async def deliver_event(event_id: str, db: AsyncSession):
 
     if delivery_status == DeliveryStatus.success:
         event.status = EventStatus.sent
-        logger.info(f"✅ Event {event_id} delivered (attempt {attempt_number})")
+        logger.info(f"Event {event_id} delivered (attempt {attempt_number})")
     else:
         await _handle_failure(event, attempt_number, error_message, db)
 
@@ -110,7 +110,7 @@ async def _handle_failure(event: Event, attempt_number: int, reason: str, db: As
     if attempt_number >= settings.MAX_RETRY_ATTEMPTS:
         event.status = EventStatus.dead
         logger.warning(
-            f"☠️  Event {event.id} moved to dead-letter queue after {attempt_number} attempts")
+            f"Event {event.id} moved to dead-letter queue after {attempt_number} attempts")
         return
 
     delay = delays[attempt_number - 1] if attempt_number - \
@@ -128,4 +128,4 @@ async def _handle_failure(event: Event, attempt_number: int, reason: str, db: As
 
     await enqueue_event(str(event.id), delay_seconds=delay)
     logger.info(
-        f"🔁 Event {event.id} retry #{attempt_number + 1} scheduled in {delay}s")
+        f"Event {event.id} retry #{attempt_number + 1} scheduled in {delay}s")

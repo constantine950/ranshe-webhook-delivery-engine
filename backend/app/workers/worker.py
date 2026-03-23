@@ -23,11 +23,11 @@ async def promote_delayed(ctx):
 
 
 async def startup(ctx):
-    logger.info("🚀 Ránṣẹ́ worker started")
+    logger.info("Ránṣẹ́ worker started")
 
 
 async def shutdown(ctx):
-    logger.info("👋 Ránṣẹ́ worker shutting down")
+    logger.info("Ránṣẹ́ worker shutting down")
 
 
 class WorkerSettings:
@@ -38,22 +38,19 @@ class WorkerSettings:
     on_shutdown = shutdown
     max_jobs = 10
     job_timeout = 60
-    keep_result = 3600  # keep job results for 1 hour
+    keep_result = 3600
 
-
-# ─── Standalone consumer (alternative to ARQ) ──────────────────
-# Run with: python -m app.workers.worker
 
 async def run_consumer():
     """Simple Redis BLPOP consumer loop (no ARQ dependency)."""
     from app.services.queue import dequeue_event
 
-    logger.info("🚀 Worker consumer started (standalone mode)")
+    logger.info("Worker consumer started (standalone mode)")
     while True:
         try:
             event_id = await dequeue_event(timeout=5)
             if event_id:
-                logger.info(f"📥 Processing event: {event_id}")
+                logger.info(f"Processing event: {event_id}")
                 async with AsyncSessionLocal() as db:
                     await deliver_event(event_id, db)
             else:
