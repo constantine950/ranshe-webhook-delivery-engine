@@ -1,28 +1,30 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from '@/hooks/useAuth'
-import LoginPage from '@/pages/LoginPage'
-import RegisterPage from '@/pages/RegisterPage'
-import DashboardLayout from '@/components/dashboard/DashboardLayout'
-import WebhooksPage from '@/pages/WebhooksPage'
-import EventsPage from '@/pages/EventsPage'
-import MetricsPage from '@/pages/MetricsPage'
-import type { ReactNode } from 'react'
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import WebhooksPage from "@/pages/WebhooksPage";
+import EventsPage from "@/pages/EventsPage";
+import MetricsPage from "@/pages/MetricsPage";
+import type { ReactNode } from "react";
+import LandingPage from "./pages/LandingPage";
 
 function PrivateRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth()
+  const { user, loading } = useAuth();
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen text-gray-400">
         Loading...
       </div>
-    )
+    );
   }
-  return user ? <>{children}</> : <Navigate to="/login" replace />
+  return user ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route
@@ -33,13 +35,12 @@ function AppRoutes() {
           </PrivateRoute>
         }
       >
-        <Route index element={<Navigate to="/metrics" replace />} />
         <Route path="metrics" element={<MetricsPage />} />
         <Route path="webhooks" element={<WebhooksPage />} />
         <Route path="events" element={<EventsPage />} />
       </Route>
     </Routes>
-  )
+  );
 }
 
 export default function App() {
@@ -47,5 +48,5 @@ export default function App() {
     <AuthProvider>
       <AppRoutes />
     </AuthProvider>
-  )
+  );
 }
